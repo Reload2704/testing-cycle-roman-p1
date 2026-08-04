@@ -20,7 +20,7 @@ def test_ac1_input_from_a_user_facing_field_is_trimmed():
 # AC2 - Sections 4 and 6: only the canonical form is accepted.
 # ---------------------------------------------------------------------------
 
-@pytest.mark.parametrize("text", ["IIII", "VIIII", "XXXX", "VV"])
+@pytest.mark.parametrize("text", ["IIII", "VIIII", "XXXX", "VV", "IVI", "IXIX", "IXX"])
 def test_ac2_non_canonical_numerals_are_rejected(text):
     with pytest.raises(RomanError):
         from_roman(text)

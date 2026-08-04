@@ -81,7 +81,58 @@ def from_roman(s):
         i += 1
     if total < _MIN_VALUE or total > _MAX_VALUE:
         raise RomanError("value out of range 1..3999")
+    _check_canonical(text)
     return total
+
+
+def _check_canonical(text):
+    message = "not a canonical roman numeral: " + text
+
+    # Rule 1: I, X, C and M appear at most three times in a row.
+    for symbol in ("I", "X", "C", "M"):
+        if symbol * 4 in text:
+            raise RomanError(message)
+
+    # Rule 2: V, L and D appear at most once in the whole string.
+    for symbol in ("V", "L", "D"):
+        if text.count(symbol) > 1:
+            raise RomanError(message)
+
+    # Rule 3: each of the six subtractive pairs at most once. The rest of the
+    # rule, no smaller symbol before a larger one outside those six, is
+    # already enforced while parsing.
+    for pair in _VALID_SUBTRACTIVE:
+        if text.count(pair) > 1:
+            raise RomanError(message)
+
+    # Read the string as a sequence of groups: a subtractive pair or a single
+    # symbol. Each group carries its value and, for a pair, the value of the
+    # subtracted symbol.
+    groups = []
+    i = 0
+    while i < len(text):
+        pair = text[i:i + 2]
+        if pair in _VALID_SUBTRACTIVE:
+            groups.append((_SINGLE[pair[1]] - _SINGLE[pair[0]], _SINGLE[pair[0]]))
+            i += 2
+        else:
+            groups.append((_SINGLE[text[i]], None))
+            i += 1
+
+    # Rule 4: group values are non-increasing from left to right.
+    for previous, current in zip(groups, groups[1:]):
+        if current[0] > previous[0]:
+            raise RomanError(message)
+
+    # Rule 5: after a subtractive pair, every following group must be worth
+    # less than the subtracted symbol.
+    for index in range(len(groups)):
+        subtracted = groups[index][1]
+        if subtracted is None:
+            continue
+        for value, _ in groups[index + 1:]:
+            if value >= subtracted:
+                raise RomanError(message)
 
 
 def _roundtrip_differs(value, text):
